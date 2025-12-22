@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar App</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark: #1e293b;
+            --light: #f1f5f9;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px 0;
+        }
+
+        /* Glassmorphism Background Overlay */
+        .glass-bg {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Calendar Container */
+        .calendar-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            padding: 32px;
+            margin-top: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calendar-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--info));
+        }
+
+        /* Calendar Header */
+        .calendar-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .calendar-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        .calendar-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .calendar-header h2 i {
+            font-size: 1.8rem;
+            margin-right: 12px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Navigation Buttons */
+        .btn-group {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-group .btn {
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--primary);
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-group .btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+            color: var(--primary-dark);
+        }
+
+        .btn-group .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-light {
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: var(--primary) !important;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 10px 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: none;
+        }
+
+        .btn-light:hover {
+            background: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+            color: var(--primary-dark) !important;
+        }
+
+        /* Weekday Headers */
+        .weekday-header {
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--primary);
+            padding: 16px 12px;
+            text-align: center;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Calendar Day Cells */
+        .calendar-day {
+            min-height: 140px;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: visible;
+        }
+
+        .calendar-day::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 28px rgba(99, 102, 241, 0.15);
+            border-color: var(--primary-light);
+        }
+
+        .calendar-day:hover::before {
+            opacity: 0.05;
+        }
+
+        .calendar-day.other-month {
+            background: #fafbfc;
+            opacity: 0.5;
+        }
+
+        .calendar-day.other-month:hover {
+            opacity: 0.7;
+        }
+
+        .calendar-day.today {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border: 2px solid var(--primary);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+            animation: todayPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes todayPulse {
+            0%, 100% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2), inset 0 1px 0 rgba(255,255,255,0.5); }
+            50% { box-shadow: 0 8px 28px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255,255,255,0.5); }
+        }
+
+        .day-number {
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover .day-number {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .today .day-number {
+            background: var(--primary);
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Appointment Items */
+        .appointment-item {
+            font-size: 0.75rem;
+            padding: 8px 10px;
+            margin: 6px 0;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: relative;
+            font-weight: 500;
+        }
+
+        .appointment-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .appointment-item:hover::before {
+            left: 100%;
+        }
+
+        .appointment-item:hover {
+            transform: translateX(4px) scale(1.03);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+
+        .appointment-details {
+            font-size: 0.7rem;
+            opacity: 0.95;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border: none;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-bottom: none;
+            padding: 24px 32px;
+            position: relative;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-title i {
+            margin-right: 8px;
+        }
+
+        .modal-body {
+            padding: 32px;
+            background: #fafbfc;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 24px 32px;
+            background: white;
+        }
+
+        /* Form Elements */
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-size: 0.925rem;
+            letter-spacing: 0.3px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Color Picker */
+        .color-options {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .color-option:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+
+        .color-option.selected {
+            border-color: var(--dark);
+            box-shadow: 0 0 0 3px white, 0 0 0 5px var(--dark), 0 4px 16px rgba(0,0,0,0.25);
+            transform: scale(1.1);
+        }
+
+        .color-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: checkmark 0.3s ease;
+        }
+
+        @keyframes checkmark {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .form-control-color {
+            width: 60px;
+            height: 44px;
+            border-radius: 12px;
+            border: 3px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-color:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* Preview Card */
+        .preview-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .preview-card:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .preview-card .form-label {
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-lg);
+            font-weight: 500;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .alert i {
+            font-size: 1.25rem;
+            margin-right: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
+        }
+
+        .btn i {
+            margin-right: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px 0;
+            }
+
+            .calendar-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .calendar-day {
+                min-height: 110px;
+                padding: 8px;
+            }
+
+            .calendar-container {
+                padding: 20px;
+            }
+
+            .day-number {
+                font-size: 1rem;
+            }
+
+            .weekday-header {
+                font-size: 0.75rem;
+                padding: 12px 8px;
+            }
+
+            .appointment-item {
+                font-size: 0.7rem;
+                padding: 6px 8px;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .loading {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid px-3 px-lg-4">
+    <!-- Header -->
+    <div class="calendar-header">
+        <div class="row align-items-center g-3">
+            <div class="col-12 col-md-6">
+                <h2>
+                    <i class="bi bi-calendar3"></i>
+                    <span th:text="${calendar.monthName}">Month</span>
+                    <span th:text="${calendar.year}">2024</span>
+                </h2>
+            </div>
+            <div class="col-12 col-md-6 text-md-end">
+                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                    <!-- Navigation Buttons -->
+                    <div class="btn-group" role="group" aria-label="Calendar navigation">
+                        <form th:action="@{/calendar/navigate}" method="post" class="d-inline">
+                            <input type="hidden" name="year" th:value="${calendar.year - 1}">
+                            <input type="hidden" name="month" th:value="${calendar.month}">
+                            <button type="submit" class="btn btn-light" aria-label="Previous year">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </button>
+                        </form>
+
+                        <form th:action="@{/calendar/navigate}" method="post" class="d-inline">
+                            <input type="hidden" name="year" th:value="${calendar.month == 1 ? calendar.year - 1 : calendar.year}">
+                            <input type="hidden" name="month" th:value="${calendar.month == 1 ? 12 : calendar.month - 1}">
+                            <button type="submit" class="btn btn-light" aria-label="Previous month">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                        </form>
+
+                        <a th:href="@{/calendar/today}" class="btn btn-light">
+                            <i class="bi bi-calendar-event"></i> Today
+                        </a>
+
+                        <form th:action="@{/calendar/navigate}" method="post" class="d-inline">
+                            <input type="hidden" name="year" th:value="${calendar.month == 12 ? calendar.year + 1 : calendar.year}">
+                            <input type="hidden" name="month" th:value="${calendar.month == 12 ? 1 : calendar.month + 1}">
+                            <button type="submit" class="btn btn-light" aria-label="Next month">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </form>
+
+                        <form th:action="@{/calendar/navigate}" method="post" class="d-inline">
+                            <input type="hidden" name="year" th:value="${calendar.year + 1}">
+                            <input type="hidden" name="month" th:value="${calendar.month}">
+                            <button type="submit" class="btn btn-light" aria-label="Next year">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#createModal">
+                        <i class="bi bi-plus-circle"></i> Create Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${successMessage}">Success message</span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="${errorMessage}">Error message</span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-container">
+        <!-- Weekday Headers -->
+        <div class="row g-2 mb-3">
+            <div class="col weekday-header">Monday</div>
+            <div class="col weekday-header">Tuesday</div>
+            <div class="col weekday-header">Wednesday</div>
+            <div class="col weekday-header">Thursday</div>
+            <div class="col weekday-header">Friday</div>
+            <div class="col weekday-header">Saturday</div>
+            <div class="col weekday-header">Sunday</div>
+        </div>
+
+        <!-- Calendar Days -->
+        <div th:each="week : ${calendar.weeks}" class="row g-3 mb-3">
+            <div th:each="day : ${week}"
+                 class="col calendar-day"
+                 th:classappend="${day.otherMonth ? 'other-month' : ''} +
+                                 ${day.day == currentDate.dayOfMonth &&
+                                   calendar.year == currentDate.year &&
+                                   calendar.month == currentDate.monthValue ? ' today' : ''}">
+
+                <div class="day-number" th:text="${day.day}">1</div>
+
+                <div th:each="appointment : ${day.appointments}"
+                     class="appointment-item"
+                     th:style="'background-color:' + ${appointment.colorCode} + ';'"
+                     data-bs-toggle="tooltip"
+                     data-bs-placement="top"
+                     th:attr="data-bs-title=${appointment.title + ' - ' + #temporals.format(appointment.startTime, 'HH:mm')}">
+
+                    <div th:text="${#strings.length(appointment.title) > 15 ?
+                                    #strings.substring(appointment.title, 0, 15) + '...' :
+                                    appointment.title}">
+                        Appointment
+                    </div>
+                    <div class="appointment-details">
+                        <i class="bi bi-clock-fill"></i>
+                        <span th:text="${#temporals.format(appointment.startTime, 'HH:mm')}">10:00</span>
+                        <span th:if="${appointment.participants}">
+                            <i class="bi bi-people-fill ms-1"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Appointment Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createModalLabel">
+                    <i class="bi bi-calendar-plus"></i> Create Schedule
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form th:action="@{/calendar/appointments}" method="post" th:object="${appointmentDTO}" id="appointmentForm">
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <!-- Title -->
+                            <div class="mb-3">
+                                <label for="appointmentTitle" class="form-label">
+                                    <i class="bi bi-card-heading me-2"></i>Title <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="appointmentTitle"
+                                       th:field="*{title}"
+                                       placeholder="Enter appointment title"
+                                       required
+                                       maxlength="100">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">
+                                    Title is required
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="appointmentDescription" class="form-label">
+                                    <i class="bi bi-text-paragraph me-2"></i>Description
+                                </label>
+                                <textarea class="form-control"
+                                          id="appointmentDescription"
+                                          th:field="*{description}"
+                                          rows="3"
+                                          placeholder="Enter description"
+                                          maxlength="500"></textarea>
+                                <small class="text-muted">Maximum 500 characters</small>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="mb-3">
+                                <label for="appointmentLocation" class="form-label">
+                                    <i class="bi bi-geo-alt-fill me-2"></i>Location
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="appointmentLocation"
+                                       th:field="*{location}"
+                                       placeholder="e.g., Conference Room A"
+                                       maxlength="100">
+                            </div>
+
+                            <!-- Participants -->
+                            <div class="mb-3">
+                                <label for="appointmentParticipants" class="form-label">
+                                    <i class="bi bi-people-fill me-2"></i>Participants
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="appointmentParticipants"
+                                       th:field="*{participants}"
+                                       placeholder="Enter names separated by commas">
+                                <small class="text-muted">Separate multiple names with commas</small>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <!-- Date & Time -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-clock-fill me-2"></i>Date & Time <span class="text-danger">*</span>
+                                </label>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <label for="startTime" class="form-label small text-muted">Start Time</label>
+                                        <input type="datetime-local"
+                                               class="form-control"
+                                               id="startTime"
+                                               th:field="*{startTime}"
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}">
+                                            Start time is required
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="endTime" class="form-label small text-muted">End Time</label>
+                                        <input type="datetime-local"
+                                               class="form-control"
+                                               id="endTime"
+                                               th:field="*{endTime}"
+                                               required>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}">
+                                            End time is required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Appointment Type -->
+                            <div class="mb-3">
+                                <label for="appointmentType" class="form-label">
+                                    <i class="bi bi-tag-fill me-2"></i>Type
+                                </label>
+                                <select class="form-select" id="appointmentType" th:field="*{type}">
+                                    <option value="MEETING">📅 Meeting</option>
+                                    <option value="CALL">📞 Call</option>
+                                    <option value="REVIEW">📊 Review</option>
+                                    <option value="TASK">✅ Task</option>
+                                    <option value="OTHER">📌 Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Color Selection -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-palette-fill me-2"></i>Color
+                                </label>
+                                <div class="color-options">
+                                    <div class="color-option"
+                                         data-color="#6366f1"
+                                         style="background-color:#6366f1;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Indigo"></div>
+                                    <div class="color-option"
+                                         data-color="#10b981"
+                                         style="background-color:#10b981;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Green"></div>
+                                    <div class="color-option"
+                                         data-color="#ef4444"
+                                         style="background-color:#ef4444;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Red"></div>
+                                    <div class="color-option"
+                                         data-color="#f59e0b"
+                                         style="background-color:#f59e0b;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Amber"></div>
+                                    <div class="color-option"
+                                         data-color="#8b5cf6"
+                                         style="background-color:#8b5cf6;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Purple"></div>
+                                    <div class="color-option"
+                                         data-color="#06b6d4"
+                                         style="background-color:#06b6d4;"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Cyan"></div>
+                                    <input type="color"
+                                           class="form-control-color"
+                                           id="colorCode"
+                                           th:field="*{colorCode}"
+                                           value="#6366f1"
+                                           title="Choose custom color">
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="preview-card">
+                                <label class="form-label">
+                                    <i class="bi bi-eye-fill me-2"></i>Preview
+                                </label>
+                                <div class="appointment-item" id="colorPreview">
+                                    <div id="previewTitle">Sample Appointment</div>
+                                    <div class="appointment-details">
+                                        <i class="bi bi-clock-fill"></i>
+                                        <span id="previewTime">10:00 AM</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i>
+                        <span>Cancel</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Create Appointment</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    (function() {
+        'use strict';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTooltips();
+            initializeDateTimeInputs();
+            initializeColorPicker();
+            initializeFormPreview();
+            initializeFormValidation();
+        });
+
+        function initializeTooltips() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        function initializeDateTimeInputs() {
+            const startInput = document.getElementById('startTime');
+            const endInput = document.getElementById('endTime');
+
+            if (!startInput || !endInput) return;
+
+            if (!startInput.value) {
+                const now = new Date();
+                now.setMinutes(0);
+                now.setSeconds(0);
+                now.setHours(now.getHours() + 1);
+
+                startInput.value = formatDateTime(now);
+
+                const endTime = new Date(now.getTime() + (60 * 60 * 1000));
+                endInput.value = formatDateTime(endTime);
+            }
+
+            startInput.addEventListener('change', function() {
+                const startTime = new Date(this.value);
+                if (!isNaN(startTime.getTime())) {
+                    const endTime = new Date(startTime.getTime() + (60 * 60 * 1000));
+                    endInput.value = formatDateTime(endTime);
+                    updatePreviewTime(startTime);
+                }
+            });
+        }
+
+        function initializeColorPicker() {
+            const colorOptions = document.querySelectorAll('.color-option');
+            const colorInput = document.getElementById('colorCode');
+
+            if (!colorInput) return;
+
+            selectColorOption(colorOptions[0]);
+
+            colorOptions.forEach(function(option) {
+                option.addEventListener('click', function() {
+                    const color = this.getAttribute('data-color');
+                    if (color) {
+                        colorInput.value = color;
+                        updateColorPreview(color);
+                        selectColorOption(this);
+                    }
+                });
+
+                option.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            colorInput.addEventListener('input', function() {
+                updateColorPreview(this.value);
+                deselectAllColorOptions();
+            });
+        }
+
+        function initializeFormPreview() {
+            const titleInput = document.getElementById('appointmentTitle');
+            const previewTitle = document.getElementById('previewTitle');
+
+            if (titleInput && previewTitle) {
+                titleInput.addEventListener('input', function() {
+                    previewTitle.textContent = this.value || 'Sample Appointment';
+                });
+            }
+        }
+
+        function initializeFormValidation() {
+            const form = document.getElementById('appointmentForm');
+            if (!form) return;
+
+            form.addEventListener('submit', function(event) {
+                const startTime = new Date(document.getElementById('startTime').value);
+                const endTime = new Date(document.getElementById('endTime').value);
+
+                if (endTime <= startTime) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    alert('End time must be after start time');
+                    return false;
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                form.classList.add('was-validated');
+            }, false);
+        }
+
+        function formatDateTime(date) {
+            if (!date || isNaN(date.getTime())) return '';
+            return date.toISOString().slice(0, 16);
+        }
+
+        function updateColorPreview(color) {
+            const preview = document.getElementById('colorPreview');
+            if (preview) {
+                preview.style.backgroundColor = color;
+            }
+        }
+
+        function updatePreviewTime(date) {
+            const previewTime = document.getElementById('previewTime');
+            if (previewTime && date) {
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                previewTime.textContent = hours + ':' + minutes;
+            }
+        }
+
+        function selectColorOption(option) {
+            deselectAllColorOptions();
+            if (option) {
+                option.classList.add('selected');
+            }
+        }
+
+        function deselectAllColorOptions() {
+            document.querySelectorAll('.color-option').forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+        }
+    })();
+</script>
+</body>
+</html>
