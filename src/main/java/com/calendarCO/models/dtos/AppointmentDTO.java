@@ -1,6 +1,5 @@
+
 package com.calendarCO.models.dtos;
-
-
 
 import com.calendarCO.models.Appointment;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +32,12 @@ public class AppointmentDTO {
     private String participants;
     private Appointment.AppointmentType type;
 
+    // User integration fields
+    private Long userId;
+    private String userName;
+    private String userEmail;
+    private String userFullName;
+
     // Convert to Entity
     public Appointment toEntity() {
         Appointment appointment = new Appointment();
@@ -45,6 +50,7 @@ public class AppointmentDTO {
         appointment.setColorCode(this.colorCode != null ? this.colorCode : "#2C87F2");
         appointment.setParticipants(this.participants);
         appointment.setType(this.type != null ? this.type : Appointment.AppointmentType.MEETING);
+        appointment.setUserId(this.userId);
         return appointment;
     }
 
@@ -60,6 +66,41 @@ public class AppointmentDTO {
         dto.setColorCode(appointment.getColorCode());
         dto.setParticipants(appointment.getParticipants());
         dto.setType(appointment.getType());
+        dto.setUserId(appointment.getUserId());
         return dto;
+    }
+
+    // Helper method to get display name for user
+    public String getUserDisplayName() {
+        if (userFullName != null && !userFullName.trim().isEmpty()) {
+            return userFullName;
+        }
+        if (userName != null && !userName.trim().isEmpty()) {
+            return userName;
+        }
+        return "Unknown User";
+    }
+
+    // Helper method to check if appointment has assigned user
+    public boolean hasAssignedUser() {
+        return userId != null;
+    }
+
+    // Helper method for frontend display
+    public String getFormattedParticipants() {
+        StringBuilder participants = new StringBuilder();
+
+        if (hasAssignedUser()) {
+            participants.append("Assigned to: ").append(getUserDisplayName());
+        }
+
+        if (this.participants != null && !this.participants.trim().isEmpty()) {
+            if (participants.length() > 0) {
+                participants.append(", ");
+            }
+            participants.append("Participants: ").append(this.participants);
+        }
+
+        return participants.toString();
     }
 }

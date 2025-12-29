@@ -37,6 +37,10 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     private AppointmentType type = AppointmentType.MEETING;
 
+    // User integration field
+    @Column(name = "user_id")
+    private Long userId;
+
     public enum AppointmentType {
         MEETING, CALL, REVIEW, TASK, OTHER
     }
