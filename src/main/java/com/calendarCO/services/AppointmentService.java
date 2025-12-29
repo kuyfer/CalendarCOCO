@@ -25,23 +25,6 @@ public class AppointmentService {
         return AppointmentDTO.fromEntity(saved);
     }
 
-    public AppointmentDTO updateAppointment(Long id, AppointmentDTO appointmentDTO) {
-        return appointmentRepository.findById(id)
-                .map(existing -> {
-                    existing.setTitle(appointmentDTO.getTitle());
-                    existing.setDescription(appointmentDTO.getDescription());
-                    existing.setStartTime(appointmentDTO.getStartTime());
-                    existing.setEndTime(appointmentDTO.getEndTime());
-                    existing.setLocation(appointmentDTO.getLocation());
-                    existing.setColorCode(appointmentDTO.getColorCode());
-                    existing.setParticipants(appointmentDTO.getParticipants());
-                    existing.setType(appointmentDTO.getType());
-                    Appointment updated = appointmentRepository.save(existing);
-                    return AppointmentDTO.fromEntity(updated);
-                })
-                .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + id));
-    }
-
     public void deleteAppointment(Long id) {
         appointmentRepository.deleteById(id);
     }
