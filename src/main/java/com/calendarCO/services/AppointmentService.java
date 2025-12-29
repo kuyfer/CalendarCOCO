@@ -25,6 +25,23 @@ public class AppointmentService {
         return AppointmentDTO.fromEntity(saved);
     }
 
+    public AppointmentDTO updateAppointment(Long id, AppointmentDTO appointmentDTO) {
+        // Find existing appointment
+        Appointment existingAppointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + id));
+
+        // Update fields from DTO
+        // Assuming AppointmentDTO has these methods and Appointment entity has setters
+        existingAppointment.setTitle(appointmentDTO.getTitle());
+        existingAppointment.setDescription(appointmentDTO.getDescription());
+        existingAppointment.setStartTime(appointmentDTO.getStartTime());
+        existingAppointment.setEndTime(appointmentDTO.getEndTime());
+
+        // Save and return updated appointment
+        Appointment updated = appointmentRepository.save(existingAppointment);
+        return AppointmentDTO.fromEntity(updated);
+    }
+
     public void deleteAppointment(Long id) {
         appointmentRepository.deleteById(id);
     }
